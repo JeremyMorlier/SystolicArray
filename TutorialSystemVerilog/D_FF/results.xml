@@ -1,0 +1,7 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1723652630" />
+    <testcase name="my_first_test4" classname="test" file="/home/j20morli/Documents/Projects/04_Architecture/SystolicArray/TutorialSystemVerilog/D_FF/test.py" lineno="5" time="0.0008981227874755859" sim_time_ns="20.001" ratio_time="22269.783462702417" />
+    <testcase name="my_second_test" classname="test" file="/home/j20morli/Documents/Projects/04_Architecture/SystolicArray/TutorialSystemVerilog/D_FF/test.py" lineno="18" time="0.005332469940185547" sim_time_ns="200.001" ratio_time="37506.25924635608" />
+  </testsuite>
+</testsuites>
