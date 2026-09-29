@@ -5,16 +5,19 @@ module pe #(
     input compute,
     input  logic unsigned [DATA_WIDTH-1:0] A,
     input  logic unsigned [DATA_WIDTH-1:0] B,
-    input  logic unsigned [DATA_WIDTH-1:0] C,
-    output logic unsigned [(2*DATA_WIDTH)+1:0]   X
+    output logic unsigned [DATA_WIDTH-1:0]   X,
+    input init
 );
     reg [(2*DATA_WIDTH)+1:0] state;
 
     always @ (posedge clk) 
+        if (init)
+            state <= 0;
+        else
         if (compute)
             // temp = A * B;
-            state <= (A * B) + ((2*DATA_WIDTH)+1)'(C);
+            state <= (A*B);
 
-    assign X = state;
+    assign X = state[DATA_WIDTH-1:0];
 
 endmodule

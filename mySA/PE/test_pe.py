@@ -1,6 +1,7 @@
+import random
+
 import cocotb
 from cocotb.triggers import Timer
-import random
 
 
 @cocotb.test()
@@ -11,12 +12,10 @@ async def test(dut):
     dut._log.info("DATA_WIDTH is %s", data_width)
     a = 1023
     b = 1023
-    c = 0
-    expected = a * b + c
+    expected = a * b
 
     dut.A.value = a
     dut.B.value = b
-    dut.C.value = c
     dut.compute.value = 0
     for cycle in range(10):
         dut.clk.value = 0
@@ -57,7 +56,6 @@ async def init_dut(dut):
     dut.compute.value = 0
     dut.A.value = 0
     dut.B.value = 0
-    dut.C.value = 0
     await tick(dut, 2)
 
 
@@ -69,13 +67,12 @@ def get_widths(dut):
     return data_width, out_bits, max_w, max_out
 
 
-async def apply_and_check(dut, a, b, c, out_bits, max_out, compute=1):
+async def apply_and_check(dut, a, b, out_bits, max_out, compute=1):
     # Capture previous X to verify hold when compute=0
     prev_x = int(dut.X.value)
 
     dut.A.value = a
     dut.B.value = b
-    dut.C.value = c
     dut.compute.value = compute
 
     # One rising edge updates state if compute=1
@@ -87,21 +84,19 @@ async def apply_and_check(dut, a, b, c, out_bits, max_out, compute=1):
         assert got == prev_x, f"X changed while compute=0: prev={prev_x} got={got}"
         return
 
-    full = (a * b) + c
+    full = a * b
     expected = u(full, out_bits)
 
     # Detect if arithmetic overflow happened beyond output width
     overflow = full > max_out
 
     assert got == expected, (
-        f"Mismatch: A={a} B={b} C={c} full={full} expected(masked)={expected} got={got}"
+        f"Mismatch: A={a} B={b} full={full} expected(masked)={expected} got={got}"
     )
 
     # Log overflow cases (not a failure—just evidence we hit them)
     if overflow:
-        dut._log.info(
-            f"Overflow case hit: A={a} B={b} C={c} full={full} masked={expected}"
-        )
+        dut._log.info(f"Overflow case hit: A={a} B={b} full={full} masked={expected}")
 
 
 @cocotb.test()
@@ -109,8 +104,8 @@ async def compute_hold_when_low(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
-    await apply_and_check(dut, 5, 7, 9, out_bits, max_out, compute=0)
-    await apply_and_check(dut, max_w, max_w, max_w, out_bits, max_out, compute=0)
+    await apply_and_check(dut, 5, 7, out_bits, max_out, compute=0)
+    await apply_and_check(dut, max_w, max_w, out_bits, max_out, compute=0)
 
 
 @cocotb.test()
@@ -119,18 +114,16 @@ async def edge_cases(dut):
     await init_dut(dut)
 
     vectors = [
-        (0, 0, 0),
-        (0, max_w, 0),
-        (max_w, 0, max_w),
-        (1, 1, 1),
-        (max_w, 1, 0),
-        (1, max_w, 0),
-        (max_w, max_w, 0),  # max product
-        (max_w, max_w, 1),
-        (max_w, max_w, max_w),
+        (0, 0),
+        (0, max_w),
+        (max_w, 0),
+        (1, 1),
+        (max_w, 1),
+        (1, max_w),
+        (max_w, max_w),  # max product
     ]
-    for a, b, c in vectors:
-        await apply_and_check(dut, a, b, c, out_bits, max_out, compute=1)
+    for a, b in vectors:
+        await apply_and_check(dut, a, b, out_bits, max_out, compute=1)
 
 
 @cocotb.test()
@@ -141,10 +134,10 @@ async def overflow_cases(dut):
     # Product is at most (2^W-1)^2 < 2^(2W). Adding C (up to 2^W-1)
     # can overflow into bit 2W (and beyond), which is why X is wider.
     # Make product near its max and add max C to force carry.
-    await apply_and_check(dut, max_w, max_w, max_w, out_bits, max_out, compute=1)
+    await apply_and_check(dut, max_w, max_w, out_bits, max_out, compute=1)
 
     # Another overflow-ish pattern: big product + big C
-    await apply_and_check(dut, max_w, max_w - 1, max_w, out_bits, max_out, compute=1)
+    await apply_and_check(dut, max_w, max_w - 1, out_bits, max_out, compute=1)
 
 
 @cocotb.test()
@@ -171,8 +164,7 @@ async def random_stress(dut):
     for _ in range(trials):
         a = biased_rand()
         b = biased_rand()
-        c = biased_rand()
-        await apply_and_check(dut, a, b, c, out_bits, max_out, compute=1)
+        await apply_and_check(dut, a, b, out_bits, max_out, compute=1)
 
 
 @cocotb.test()
@@ -180,6 +172,7 @@ async def compute_hold_after_update(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
-    await apply_and_check(dut, 13, 17, 19, out_bits, max_out, compute=1)
-    await apply_and_check(dut, 0, 0, 0, out_bits, max_out, compute=0)
-    await apply_and_check(dut, max_w, max_w, max_w, out_bits, max_out, compute=0)
+    # Test that the PE holds its output when compute is low
+    await apply_and_check(dut, 13, 17, out_bits, max_out, compute=1)
+    await apply_and_check(dut, 0, 0, out_bits, max_out, compute=0)
+    await apply_and_check(dut, max_w, max_w, out_bits, max_out, compute=0)

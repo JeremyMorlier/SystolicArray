@@ -2,8 +2,9 @@ SIM ?= verilator
 TOPLEVEL_LANG ?= verilog
 EXTRA_ARGS += --trace --trace-structs
 VERILOG_SOURCES += pe.v 
-TOPLEVEL = pe 
-MODULE = test_pe
+VERILOG_SOURCES += pe_array.v
+TOPLEVEL = array 
+MODULE = test_array
 
 # ---- Waveform dumping ----
 
