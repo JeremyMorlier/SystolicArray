@@ -4,7 +4,7 @@ import random
 
 
 @cocotb.test()
-async def test_pe(dut):
+async def test(dut):
     """Try accessing the design."""
 
     data_width = dut.DATA_WIDTH.value
@@ -94,8 +94,7 @@ async def apply_and_check(dut, a, b, c, out_bits, max_out, compute=1):
     overflow = full > max_out
 
     assert got == expected, (
-        f"Mismatch: A={a} B={b} C={c} "
-        f"full={full} expected(masked)={expected} got={got}"
+        f"Mismatch: A={a} B={b} C={c} full={full} expected(masked)={expected} got={got}"
     )
 
     # Log overflow cases (not a failure—just evidence we hit them)
@@ -106,7 +105,7 @@ async def apply_and_check(dut, a, b, c, out_bits, max_out, compute=1):
 
 
 @cocotb.test()
-async def test_pe_compute_hold_when_low(dut):
+async def compute_hold_when_low(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
@@ -115,7 +114,7 @@ async def test_pe_compute_hold_when_low(dut):
 
 
 @cocotb.test()
-async def test_pe_edge_cases(dut):
+async def edge_cases(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
@@ -135,7 +134,7 @@ async def test_pe_edge_cases(dut):
 
 
 @cocotb.test()
-async def test_pe_overflow_cases(dut):
+async def overflow_cases(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
@@ -149,7 +148,7 @@ async def test_pe_overflow_cases(dut):
 
 
 @cocotb.test()
-async def test_pe_random_stress(dut):
+async def random_stress(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
@@ -177,7 +176,7 @@ async def test_pe_random_stress(dut):
 
 
 @cocotb.test()
-async def test_pe_compute_hold_after_update(dut):
+async def compute_hold_after_update(dut):
     _, out_bits, max_w, max_out = get_widths(dut)
     await init_dut(dut)
 
